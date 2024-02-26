@@ -12,6 +12,7 @@ class ImageColorPicker extends StatefulWidget {
 class _ImageColorPickerState extends State<ImageColorPicker> {
   // This will hold the color value we pick
   Color pickedColor = Colors.transparent;
+  Offset? tapPosition; // Add this variable to hold the tap position
 
   // Method to pick color from image
   void pickColor(TapUpDetails details, BuildContext context) async {
@@ -22,7 +23,7 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
 
       setState(() {
         pickedColor = pixel;
-        // Print the picked color value to console
+        tapPosition = offset; // Update the tap position
         print('Picked color: ${pickedColor.toHex()}');
       });
     } catch (e) {
@@ -33,16 +34,25 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
   // Method to get pixel color from image
   Future<Color> getImagePixel(Offset globalPosition) async {
     ByteData byteData = await rootBundle.load('assets/sample_image.jpeg');
-    Uint8List values =
-        byteData.buffer.asUint8List(); // Ensure 'values' is Uint8List
-    ui.Codec codec =
-        await ui.instantiateImageCodec(values); // Pass 'values' directly
+    Uint8List values = byteData.buffer.asUint8List();
+    ui.Codec codec = await ui.instantiateImageCodec(values);
     ui.FrameInfo fi = await codec.getNextFrame();
+
+    if (globalPosition.dx < 0 ||
+        globalPosition.dy < 0 ||
+        globalPosition.dx >= fi.image.width ||
+        globalPosition.dy >= fi.image.height) {
+      return Colors.transparent; // Return transparent color if out of bounds
+    }
 
     int pixelWidth = fi.image.width;
     int pixelX = globalPosition.dx.round();
     int pixelY = globalPosition.dy.round();
     int pixelIndex = (pixelY * pixelWidth + pixelX) * 4;
+
+    if (pixelIndex >= values.length - 4) { // Check if the index is within the array
+      return Colors.transparent;
+    }
 
     int r = values[pixelIndex + 0];
     int g = values[pixelIndex + 1];
@@ -52,21 +62,6 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
     return Color.fromARGB(a, r, g, b);
   }
 
-  // Helper method to load image
-  Future<ui.Image> loadImage(ByteData data) async {
-    final list = data.buffer.asUint8List();
-    final codec = await ui.instantiateImageCodec(list);
-    final frame = await codec.getNextFrame();
-    return frame.image;
-  }
-
-  // Helper method to convert color format
-  int abgrToArgb(int pixel) {
-    int r = (pixel >> 16) & 0xFF;
-    int b = (pixel >> 0) & 0xFF;
-    return (pixel & 0xFF00FF00) | (b << 16) | r;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -74,14 +69,34 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
         onTapUp: (details) {
           pickColor(details, context);
         },
-        child: Image.asset('assets/sample_image.jpeg'),
+        child: CustomPaint(
+          painter: TapPositionPainter(tapPosition),
+          child: Image.asset('assets/sample_image.jpeg'),
+        ),
       ),
     );
   }
 }
 
+class TapPositionPainter extends CustomPainter {
+  final Offset? tapPosition;
+
+  TapPositionPainter(this.tapPosition);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (tapPosition != null) {
+      canvas.drawCircle(tapPosition!, 10, Paint()..color = Colors.red);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
 extension ColorExtension on Color {
-  // Helper method to convert Color object to hex string
   String toHex() =>
       '#${red.toRadixString(16).padLeft(2, '0')}${green.toRadixString(16).padLeft(2, '0')}${blue.toRadixString(16).padLeft(2, '0')}';
 }

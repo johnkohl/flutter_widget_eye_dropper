@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 
 class ImageColorPicker extends StatefulWidget {
   const ImageColorPicker({super.key});
@@ -12,18 +13,24 @@ class ImageColorPicker extends StatefulWidget {
 class _ImageColorPickerState extends State<ImageColorPicker> {
   // This will hold the color value we pick
   Color pickedColor = Colors.transparent;
-  Offset? tapPosition; // Add this variable to hold the tap position
 
   // Method to pick color from image
   void pickColor(TapUpDetails details, BuildContext context) async {
     try {
+      print('\n');
+      double scaleFactor = await _calculateScaleFactor(context);
+
       RenderBox box = context.findRenderObject() as RenderBox;
       final offset = box.globalToLocal(details.globalPosition);
-      final pixel = await getImagePixel(offset);
+      final scaledOffset = Offset(
+        offset.dx / scaleFactor,
+        offset.dy / scaleFactor,
+      ); // Adjusted coordinates
+
+      final pixel = await getImagePixel(scaledOffset);
 
       setState(() {
         pickedColor = pixel;
-        tapPosition = offset; // Update the tap position
         print('Picked color: ${pickedColor.toHex()}');
       });
     } catch (e) {
@@ -38,28 +45,45 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
     ui.Codec codec = await ui.instantiateImageCodec(values);
     ui.FrameInfo fi = await codec.getNextFrame();
 
-    if (globalPosition.dx < 0 ||
-        globalPosition.dy < 0 ||
-        globalPosition.dx >= fi.image.width ||
-        globalPosition.dy >= fi.image.height) {
-      return Colors.transparent; // Return transparent color if out of bounds
-    }
-
     int pixelWidth = fi.image.width;
-    int pixelX = globalPosition.dx.round();
-    int pixelY = globalPosition.dy.round();
+    int pixelX = math.min(globalPosition.dx.round(), pixelWidth - 1);
+    int pixelY = math.min(globalPosition.dy.round(), fi.image.height - 1);
     int pixelIndex = (pixelY * pixelWidth + pixelX) * 4;
-
-    if (pixelIndex >= values.length - 4) { // Check if the index is within the array
-      return Colors.transparent;
-    }
 
     int r = values[pixelIndex + 0];
     int g = values[pixelIndex + 1];
     int b = values[pixelIndex + 2];
     int a = values[pixelIndex + 3];
 
+    print('Image Dimensions: $pixelWidth x ${fi.image.height}');
+    print('Pixel Coordinates: $pixelX, $pixelY');
+
     return Color.fromARGB(a, r, g, b);
+  }
+
+  // Helper method to calculate the scale factor
+  Future<double> _calculateScaleFactor(BuildContext context) async {
+    RenderBox box = context.findRenderObject() as RenderBox;
+    Size size = box.size; // Size of the image widget on the screen
+    print('Window (RenderBox) Dimensions: $size');
+
+    ByteData byteData = await rootBundle.load('assets/sample_image.jpeg');
+    final list = byteData.buffer.asUint8List();
+    final codec = await ui.instantiateImageCodec(list);
+    final frame = await codec.getNextFrame();
+    final imageSize = Size(
+      frame.image.width.toDouble(),
+      frame.image.height.toDouble(),
+    ); // Actual size of the image
+    print('Actual Image Dimensions: $imageSize');
+
+    double scaleX = size.width / imageSize.width;
+    double scaleY = size.height / imageSize.height;
+    double scaleFactor = math.min(scaleX, scaleY);
+    print('Scale Factor: $scaleFactor');
+
+    // Assuming the image is scaled uniformly
+    return math.min(scaleX, scaleY);
   }
 
   @override
@@ -69,34 +93,14 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
         onTapUp: (details) {
           pickColor(details, context);
         },
-        child: CustomPaint(
-          painter: TapPositionPainter(tapPosition),
-          child: Image.asset('assets/sample_image.jpeg'),
-        ),
+        child: Image.asset('assets/sample_image.jpeg'),
       ),
     );
   }
 }
 
-class TapPositionPainter extends CustomPainter {
-  final Offset? tapPosition;
-
-  TapPositionPainter(this.tapPosition);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (tapPosition != null) {
-      canvas.drawCircle(tapPosition!, 10, Paint()..color = Colors.red);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
 extension ColorExtension on Color {
+  // Helper method to convert Color object to hex string
   String toHex() =>
       '#${red.toRadixString(16).padLeft(2, '0')}${green.toRadixString(16).padLeft(2, '0')}${blue.toRadixString(16).padLeft(2, '0')}';
 }

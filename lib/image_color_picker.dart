@@ -18,14 +18,21 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
   void pickColor(TapUpDetails details, BuildContext context) async {
     try {
       print('\n');
+
       double scaleFactor = await _calculateScaleFactor(context);
 
       RenderBox box = context.findRenderObject() as RenderBox;
-      final offset = box.globalToLocal(details.globalPosition);
+      final rawGlobalPosition = details.globalPosition;
+      print('Raw Tap Coordinates: $rawGlobalPosition'); // Log raw tap coordinates
+
+      final offset = box.globalToLocal(rawGlobalPosition);
+      print('Transformed Coordinates (RelativeToBox): $offset'); // Log transformed coordinates
+
       final scaledOffset = Offset(
         offset.dx / scaleFactor,
         offset.dy / scaleFactor,
-      ); // Adjusted coordinates
+      );
+      print('Scaled Coordinates: $scaledOffset'); // Log final scaled coordinates
 
       final pixel = await getImagePixel(scaledOffset);
 
@@ -79,6 +86,8 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
 
     double scaleX = size.width / imageSize.width;
     double scaleY = size.height / imageSize.height;
+    // print ('scaleX: $scaleX');
+    // print ('scaleY: $scaleY');    
     double scaleFactor = math.min(scaleX, scaleY);
     print('Scale Factor: $scaleFactor');
 

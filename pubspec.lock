@@ -119,10 +119,10 @@ packages:
     dependency: "direct main"
     description:
       name: image
-      sha256: "4c68bfd5ae83e700b5204c1e74451e7bf3cf750e6843c6e158289cf56bda018e"
+      sha256: "8e9d133755c3e84c73288363e6343157c383a0c6c56fc51afcc5d4d7180306d6"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.7"
+    version: "3.3.0"
   js:
     dependency: transitive
     description:
@@ -203,6 +203,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.2"
+  pick_color:
+    dependency: "direct main"
+    description:
+      name: pick_color
+      sha256: f2a5017720001f17e5082c974135e3fe1f0728026cacb697c8b540fb2f81f1d4
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
   pixel_color_image:
     dependency: "direct main"
     description:
@@ -314,3 +322,4 @@ packages:
     version: "6.5.0"
 sdks:
   dart: ">=3.3.0 <4.0.0"
+  flutter: ">=1.17.0"

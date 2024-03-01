@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
-import 'package:pixel_color_image/pixel_color_image.dart';
-import 'dart:async'; // Import the async library for Timer
+import 'package:pick_color/pick_color.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,110 +12,128 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: ImagePickerScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
+class ImagePickerScreen extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _ImagePickerScreenState createState() => _ImagePickerScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final PixelColorRef ref = PixelColorRef();
-  Timer? _throttleTimer;
-  int _lastX = -1;
-  int _lastY = -1;
-  Color _lastColor = Colors.transparent;
-
-  void _updateColorInfo(int x, int y, Color color) {
-    // Check if position or color has changed
-    if (x != _lastX || y != _lastY || color != _lastColor) {
-      // Update the last values
-      _lastX = x;
-      _lastY = y;
-      _lastColor = color;
-
-      // Extract RGBA values
-      int red = color.red;
-      int green = color.green;
-      int blue = color.blue;
-      double opacity = color.opacity;
-
-      // Print color values
-      debugPrint(
-          'Hover x: $x, y: $y, Color - R:$red, G:$green, B:$blue, Opacity:$opacity');
-    }
-  }
-
-  void onHover(int x, int y, Color color) {
-    if (_throttleTimer == null || !_throttleTimer!.isActive) {
-      _throttleTimer = Timer(Duration(milliseconds: 1000), () {
-        _updateColorInfo(x, y, color);
-      });
-    }
-  }
-
-  // Function to handle tap event
-  void onTap(int x, int y, Color color) async {
-      // Update the last values
-      _lastX = x;
-      _lastY = y;
-      _lastColor = color;
-      // Extract RGBA values
-      int red = color.red;
-      int green = color.green;
-      int blue = color.blue;
-      double opacity = color.opacity;
-      debugPrint(
-          'Tap x: $x, y: $y, Color - R:$red, G:$green, B:$blue, Opacity:$opacity');
-  }
-
-  @override
-  void dispose() {
-    _throttleTimer?.cancel(); // Cancel the timer when the widget is disposed
-    super.dispose();
-  }
+class _ImagePickerScreenState extends State<ImagePickerScreen> {
+  Image image = Image.asset(
+    "assets/sample_image.jpeg",
+    fit: BoxFit.contain, // Added to ensure the image scales properly
+  );
+  Color? color;
+  PickerResponse? userResponse;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            PixelColorPreview(
-              ref: ref,
+    return SafeArea(
+      child: Scaffold(
+          body: Column(
+        children: [
+          Expanded(
+            // Wrapped with Expanded to take available space
+            child: Container(
+              width: double.infinity, // Scales with the width of the container
+              height:
+                  double.infinity, // Scales with the height of the container
+              child: ColorPicker(
+                  child: image,
+                  showMarker: true,
+                  onChanged: (response) {
+                    setState(() {
+                      userResponse = response;
+                      this.color = response.selectionColor;
+                    });
+                  }),
             ),
-            Expanded(  // Make sure the image takes up the remaining space
-              child: AspectRatio(
-                aspectRatio: 16 / 9,  // Set the aspect ratio as per your image
-                child: FittedBox(
-                  fit: BoxFit.contain,  // Ensures the entire image is visible
-                  child: PixelColor.assetImage(
-                    path: 'assets/sample_image.jpeg',
-                    onHover: onHover,
-                    onTap: onTap,
-                    ref: ref,
-                  ),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                const Text(
+                  "Selected Color  :-",
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-              ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: userResponse?.selectionColor ?? Colors.red,
+                      border: Border.all(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.circular(20)),
+                )
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text("Hex Code  :- ${userResponse?.hexCode ?? ""}",
+                    style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text("Red :- ${userResponse?.redScale ?? ""}",
+                    style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text("Green  :- ${userResponse?.greenScale ?? ""}",
+                    style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text("Blue :- ${userResponse?.blueScale ?? ""}",
+                    style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          )
+
+          // ${userResponse?.hexCode ?? ""}
+        ],
+      )),
     );
   }
 }

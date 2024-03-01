@@ -16,25 +16,65 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
 
   // Method to pick color from image
   void pickColor(TapUpDetails details, BuildContext context) async {
-    try {
-      print('\n');
+    print('\n');
 
-      double scaleFactor = await _calculateScaleFactor(context);
+    try {
+      double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+      print('Device Pixel Ratio: $devicePixelRatio');
 
       RenderBox box = context.findRenderObject() as RenderBox;
       final rawGlobalPosition = details.globalPosition;
-      print('Raw Tap Coordinates: $rawGlobalPosition'); // Log raw tap coordinates
+      print(
+          'Raw Tap Coordinates: $rawGlobalPosition'); // Log raw tap coordinates
 
       final offset = box.globalToLocal(rawGlobalPosition);
-      print('Transformed Coordinates (RelativeToBox): $offset'); // Log transformed coordinates
+      print(
+          'Transformed Coordinates (RelativeToBox): $offset'); // Log transformed coordinates
 
-      final scaledOffset = Offset(
-        offset.dx / scaleFactor,
-        offset.dy / scaleFactor,
+      double scaleFactor, offsetX, offsetY;
+      Size boxSize = box.size;
+      print('Window (RenderBox) Dimensions: $boxSize');
+
+      ByteData byteData = await rootBundle.load('assets/sample_image.jpeg');
+      final list = byteData.buffer.asUint8List();
+      final codec = await ui.instantiateImageCodec(list);
+      final frame = await codec.getNextFrame();
+      final imageSize =
+          Size(frame.image.width.toDouble(), frame.image.height.toDouble());
+      print('Actual Image Dimensions: $imageSize');
+
+      if ((boxSize.width / boxSize.height) >
+          (imageSize.width / imageSize.height)) {
+        // Letterboxing
+        scaleFactor = boxSize.height / imageSize.height;
+        double scaledWidth = imageSize.width * scaleFactor;
+        offsetX = (boxSize.width - scaledWidth) / 2;
+        offsetY = 0;
+        print('Letterboxing: OffsetX=$offsetX, ScaleFactor=$scaleFactor');
+      } else {
+        // Pillarboxing
+        scaleFactor = boxSize.width / imageSize.width;
+        double scaledHeight = imageSize.height * scaleFactor;
+        offsetX = 0;
+        offsetY = (boxSize.height - scaledHeight) / 2;
+        print('Pillarboxing: OffsetY=$offsetY, ScaleFactor=$scaleFactor');
+      }
+
+      Offset adjustedOffset = Offset(
+        ((offset.dx - offsetX) / scaleFactor) / devicePixelRatio,
+        ((offset.dy - offsetY) / scaleFactor) / devicePixelRatio,
       );
-      print('Scaled Coordinates: $scaledOffset'); // Log final scaled coordinates
+      print('Adjusted Tap Coordinates for High-DPI: $adjustedOffset');
 
-      final pixel = await getImagePixel(scaledOffset);
+      if (adjustedOffset.dx < 0 ||
+          adjustedOffset.dx >= imageSize.width ||
+          adjustedOffset.dy < 0 ||
+          adjustedOffset.dy >= imageSize.height) {
+        print("Tap coordinates are out of image bounds");
+        return;
+      }
+
+      final pixel = await getImagePixel(adjustedOffset);
 
       setState(() {
         pickedColor = pixel;
@@ -46,27 +86,57 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
   }
 
   // Method to get pixel color from image
-  Future<Color> getImagePixel(Offset globalPosition) async {
-    ByteData byteData = await rootBundle.load('assets/sample_image.jpeg');
-    Uint8List values = byteData.buffer.asUint8List();
-    ui.Codec codec = await ui.instantiateImageCodec(values);
-    ui.FrameInfo fi = await codec.getNextFrame();
+Future<Color> getImagePixel(Offset globalPosition) async {
 
-    int pixelWidth = fi.image.width;
-    int pixelX = math.min(globalPosition.dx.round(), pixelWidth - 1);
-    int pixelY = math.min(globalPosition.dy.round(), fi.image.height - 1);
-    int pixelIndex = (pixelY * pixelWidth + pixelX) * 4;
+  // Load the image
+  ByteData byteData = await rootBundle.load('assets/sample_image.jpeg');
+  Uint8List values = byteData.buffer.asUint8List();
+  ui.Codec codec = await ui.instantiateImageCodec(values);
+  ui.FrameInfo fi = await codec.getNextFrame();
 
-    int r = values[pixelIndex + 0];
-    int g = values[pixelIndex + 1];
-    int b = values[pixelIndex + 2];
-    int a = values[pixelIndex + 3];
+  // Get image dimensions
+  int pixelWidth = fi.image.width;
+  int pixelHeight = fi.image.height;
 
-    print('Image Dimensions: $pixelWidth x ${fi.image.height}');
-    print('Pixel Coordinates: $pixelX, $pixelY');
+  // Create a picture recorder
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
 
-    return Color.fromARGB(a, r, g, b);
+  // Draw the image onto the canvas
+  final paint = Paint();
+  canvas.drawImage(fi.image, Offset.zero, paint);
+
+  // End recording the canvas
+  final picture = recorder.endRecording();
+  final img = await picture.toImage(pixelWidth, pixelHeight);
+
+  // Get the pixel data from the canvas
+  final canvasByteData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+  if (canvasByteData == null) {
+    print("Failed to get byte data from canvas");
+    return Colors.transparent; // or handle the null case as needed
   }
+  final buffer = canvasByteData.buffer;
+
+  // Calculate the pixel index
+  int pixelX = math.min(globalPosition.dx.round(), pixelWidth - 1);
+  int pixelY = math.min(globalPosition.dy.round(), pixelHeight - 1);
+
+  // Ensure the pixel coordinates are within the bounds
+  if (pixelX < 0 || pixelX >= pixelWidth || pixelY < 0 || pixelY >= pixelHeight) {
+    print("Pixel coordinates are out of image bounds");
+    return Colors.transparent;
+  }
+
+  int pixelIndex = (pixelY * pixelWidth + pixelX) * 4;
+
+  // Get the pixel color
+  final rgba = buffer.asUint32List(pixelIndex, 1);
+
+  return Color(rgba[0]);
+}
+
+
 
   // Helper method to calculate the scale factor
   Future<double> _calculateScaleFactor(BuildContext context) async {
@@ -87,7 +157,7 @@ class _ImageColorPickerState extends State<ImageColorPicker> {
     double scaleX = size.width / imageSize.width;
     double scaleY = size.height / imageSize.height;
     // print ('scaleX: $scaleX');
-    // print ('scaleY: $scaleY');    
+    // print ('scaleY: $scaleY');
     double scaleFactor = math.min(scaleX, scaleY);
     print('Scale Factor: $scaleFactor');
 

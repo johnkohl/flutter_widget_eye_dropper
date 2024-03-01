@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:pixel_color_image/pixel_color_image.dart';
+import 'dart:async'; // Import the async library for Timer
 
 void main() {
   runApp(const MyApp());
@@ -32,22 +33,58 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PixelColorRef ref = PixelColorRef();
+  Timer? _throttleTimer;
+  int _lastX = -1;
+  int _lastY = -1;
+  Color _lastColor = Colors.transparent;
 
-  // Function to handle hover event
+  void _updateColorInfo(int x, int y, Color color) {
+    // Check if position or color has changed
+    if (x != _lastX || y != _lastY || color != _lastColor) {
+      // Update the last values
+      _lastX = x;
+      _lastY = y;
+      _lastColor = color;
+
+      // Extract RGBA values
+      int red = color.red;
+      int green = color.green;
+      int blue = color.blue;
+      double opacity = color.opacity;
+
+      // Print color values
+      debugPrint(
+          'Hover x: $x, y: $y, Color - R:$red, G:$green, B:$blue, Opacity:$opacity');
+    }
+  }
+
   void onHover(int x, int y, Color color) {
-    // Extract RGBA values
-    int red = color.red;
-    int green = color.green;
-    int blue = color.blue;
-    double opacity = color.opacity; // Alpha value as a fraction of 1
-
-    // Print color values
-    debugPrint('Hover x: $x, y: $y, Color - R:$red, G:$green, B:$blue, Opacity:$opacity');
+    if (_throttleTimer == null || !_throttleTimer!.isActive) {
+      _throttleTimer = Timer(Duration(milliseconds: 1000), () {
+        _updateColorInfo(x, y, color);
+      });
+    }
   }
 
   // Function to handle tap event
   void onTap(int x, int y, Color color) async {
-    debugPrint('Tap x: $x, y: $y, color: $color');
+      // Update the last values
+      _lastX = x;
+      _lastY = y;
+      _lastColor = color;
+      // Extract RGBA values
+      int red = color.red;
+      int green = color.green;
+      int blue = color.blue;
+      double opacity = color.opacity;
+      debugPrint(
+          'Tap x: $x, y: $y, Color - R:$red, G:$green, B:$blue, Opacity:$opacity');
+  }
+
+  @override
+  void dispose() {
+    _throttleTimer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   @override
@@ -61,9 +98,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            PixelColorPreview(
-              ref: ref,
-            ),
+            // PixelColorPreview(
+            //   ref: ref,
+            // ),
             PixelColor.assetImage(
               path: 'assets/sample_image.jpeg',
               onHover: onHover,

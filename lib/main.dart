@@ -98,14 +98,22 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            // PixelColorPreview(
-            //   ref: ref,
-            // ),
-            PixelColor.assetImage(
-              path: 'assets/sample_image.jpeg',
-              onHover: onHover,
-              onTap: onTap,
+            PixelColorPreview(
               ref: ref,
+            ),
+            Expanded(  // Make sure the image takes up the remaining space
+              child: AspectRatio(
+                aspectRatio: 16 / 9,  // Set the aspect ratio as per your image
+                child: FittedBox(
+                  fit: BoxFit.contain,  // Ensures the entire image is visible
+                  child: PixelColor.assetImage(
+                    path: 'assets/sample_image.jpeg',
+                    onHover: onHover,
+                    onTap: onTap,
+                    ref: ref,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

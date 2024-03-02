@@ -29,7 +29,7 @@ class ImagePickerScreen extends StatefulWidget {
 class _ImagePickerScreenState extends State<ImagePickerScreen> {
   Image image = Image.asset(
     "assets/sample_image.jpeg",
-    fit: BoxFit.contain, // Added to ensure the image scales properly
+    height: 300,
   );
   Color? color;
   PickerResponse? userResponse;
@@ -40,96 +40,35 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
       child: Scaffold(
           body: Column(
         children: [
-          Expanded(
-            // Wrapped with Expanded to take available space
-            child: Container(
-              width: double.infinity, // Scales with the width of the container
-              height:
-                  double.infinity, // Scales with the height of the container
-              child: ColorPicker(
-                  child: image,
-                  showMarker: true,
-                  onChanged: (response) {
-                    setState(() {
-                      userResponse = response;
-                      this.color = response.selectionColor;
-                    });
-                  }),
-            ),
-          ),
-          const SizedBox(
-            height: 20,
-          ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(0),
             child: Row(
               children: [
-                const Text(
-                  "Selected Color  :-",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
                       color: userResponse?.selectionColor ?? Colors.red,
-                      border: Border.all(color: Colors.black, width: 1),
-                      borderRadius: BorderRadius.circular(20)),
-                )
-              ],
-            ),
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text("Hex Code  :- ${userResponse?.hexCode ?? ""}",
+                      border: Border.all(color: Colors.black, width: 0),
+                      borderRadius: BorderRadius.circular(0)),
+                ),
+                Text("${userResponse?.hexCode ?? ""}",
                     style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
+                        color: Color.fromARGB(255, 43, 38, 38),
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text("Red :- ${userResponse?.redScale ?? ""}",
-                    style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text("Green  :- ${userResponse?.greenScale ?? ""}",
-                    style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text("Blue :- ${userResponse?.blueScale ?? ""}",
-                    style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          )
+          ColorPicker(
+              child: image,
+              showMarker: true,
+              onChanged: (response) {
+                setState(() {
+                  userResponse = response;
+                  this.color = response.selectionColor;
+                });
+              }),
 
           // ${userResponse?.hexCode ?? ""}
         ],

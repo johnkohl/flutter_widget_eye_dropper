@@ -29,19 +29,21 @@ class ImagePickerScreen extends StatefulWidget {
 class _ImagePickerScreenState extends State<ImagePickerScreen> {
   Image image = Image.asset(
     "assets/sample_image.jpeg",
-    height: 300,
+    fit: BoxFit.contain, // BoxFit.contain to ensure the image is always fully visible
   );
   Color? color;
   PickerResponse? userResponse;
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size; // Get the screen size
+
     return SafeArea(
       child: Scaffold(
           body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(0),
+            padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
                 Container(
@@ -49,28 +51,33 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                   height: 20,
                   decoration: BoxDecoration(
                       color: userResponse?.selectionColor ?? Colors.red,
-                      border: Border.all(color: Colors.black, width: 0),
-                      borderRadius: BorderRadius.circular(0)),
+                      border: Border.all(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(5)),
                 ),
-                Text("${userResponse?.hexCode ?? ""}",
-                    style: const TextStyle(
-                        color: Color.fromARGB(255, 43, 38, 38),
-                        fontWeight: FontWeight.bold)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text("${userResponse?.hexCode ?? ""}",
+                      style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
           ),
-
-          ColorPicker(
-              child: image,
-              showMarker: true,
-              onChanged: (response) {
-                setState(() {
-                  userResponse = response;
-                  this.color = response.selectionColor;
-                });
-              }),
-
-          // ${userResponse?.hexCode ?? ""}
+          Expanded(
+            child: AspectRatio(
+              aspectRatio: screenSize.width / screenSize.height, // Set aspect ratio based on screen size
+              child: ColorPicker(
+                child: image,
+                showMarker: true,
+                onChanged: (response) {
+                  setState(() {
+                    userResponse = response;
+                    this.color = response.selectionColor;
+                  });
+                }),
+            ),
+          ),
         ],
       )),
     );

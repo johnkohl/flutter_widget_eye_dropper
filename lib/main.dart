@@ -51,8 +51,8 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                   height: 20,
                   decoration: BoxDecoration(
                       color: userResponse?.selectionColor ?? Colors.red,
-                      border: Border.all(color: Colors.black, width: 0),
-                      borderRadius: BorderRadius.circular(0)),
+                      border: Border.all(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(5)),
                 ),
                 SizedBox(width: 8),
                 Expanded(
@@ -69,7 +69,7 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
               aspectRatio: screenSize.width / screenSize.height, // Set aspect ratio based on screen size
               child: ColorPicker(
                 child: image,
-                showMarker: false,
+                showMarker: true,
                 onChanged: (response) {
                   setState(() {
                     userResponse = response;

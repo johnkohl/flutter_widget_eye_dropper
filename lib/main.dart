@@ -22,15 +22,29 @@ class MyApp extends StatelessWidget {
 }
 
 class ColorPickerScreen extends StatefulWidget {
+  const ColorPickerScreen({
+    super.key,
+    this.width,
+    this.height,
+    this.imageAsset,
+  });
+
+  final double? width;
+  final double? height;
+  final String? imageAsset;
+
   @override
-  _ColorPickerScreenState createState() => _ColorPickerScreenState();
+  State<ColorPickerScreen> createState() => _ColorPickerScreenState();
 }
 
 class _ColorPickerScreenState extends State<ColorPickerScreen> {
+  // late Image image;
+
   Image image = Image.asset(
     "assets/sample_image.jpeg",
     fit: BoxFit.contain, // BoxFit.contain to ensure the image is always fully visible
   );
+
   Color? color;
   PickerResponse? userResponse;
 
@@ -38,7 +52,7 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size; // Get the screen size
 
-    return SafeArea(
+    return Container(
       child: Scaffold(
           body: Column(
         children: [
@@ -54,28 +68,28 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                       border: Border.all(color: Colors.black, width: 0),
                       borderRadius: BorderRadius.circular(0)),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Text("${userResponse?.hexCode ?? ""}",
+                  child: Text(userResponse?.hexCode ?? "",
                       style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold)),
+                          color: Colors.black, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
           ),
           Expanded(
             child: AspectRatio(
-              aspectRatio: screenSize.width / screenSize.height, // Set aspect ratio based on screen size
+              aspectRatio: screenSize.width /
+                  screenSize.height, // Set aspect ratio based on screen size
               child: ColorPicker(
-                child: image,
-                showMarker: false,
-                onChanged: (response) {
-                  setState(() {
-                    userResponse = response;
-                    this.color = response.selectionColor;
-                  });
-                }),
+                  child: image,
+                  showMarker: false,
+                  onChanged: (response) {
+                    setState(() {
+                      userResponse = response;
+                      color = response.selectionColor;
+                    });
+                  }),
             ),
           ),
         ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pixel_color_image/pixel_color_image.dart';
 
-/// Called while Hoverring
+/// Called while Hovering
 void onHover(int x, int y, Color color) async {
   debugPrint('Hover x: $x, y: $y, color: $color');
 }
@@ -11,7 +11,7 @@ void onTap(int x, int y, Color color) async {
   debugPrint('Tap x: $x, y: $y, color: $color');
 }
 
-/// Refarence for Preview
+/// Reference for Preview
 final ref = PixelColorRef();
 
 /// main
@@ -24,10 +24,6 @@ void main() async {
     ref: ref,
   );
 
-  //
-  // connect preview by "ref"
-  //
-
   // Color Preview
   final pixelColorPreview = PixelColorPreview(
     ref: ref,
@@ -39,7 +35,12 @@ void main() async {
       body: Column(
         children: [
           pixelColorPreview, // color preview
-          pixelColorImage, // image
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: pixelColorImage, // image
+            ),
+          ),
         ],
       ),
     ),

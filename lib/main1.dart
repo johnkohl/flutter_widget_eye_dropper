@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'package:pixel_color_image/pixel_color_image.dart';
 import 'dart:async'; // Import the async library for Timer
 
@@ -60,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void onHover(int x, int y, Color color) {
     if (_throttleTimer == null || !_throttleTimer!.isActive) {
-      _throttleTimer = Timer(Duration(milliseconds: 1000), () {
+      _throttleTimer = Timer(const Duration(milliseconds: 1000), () {
         _updateColorInfo(x, y, color);
       });
     }

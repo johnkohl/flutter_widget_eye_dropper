@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import 'package:pixel_color_image/pixel_color_image.dart';
 
 class ImageColorPicker extends StatefulWidget {
   const ImageColorPicker({super.key});

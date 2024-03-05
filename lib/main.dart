@@ -1,99 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:pick_color/pick_color.dart';
+import 'package:pixel_color_image/pixel_color_image.dart';
 
-void main() {
-  runApp(const MyApp());
+/// Called while Hoverring
+void onHover(int x, int y, Color color) async {
+  debugPrint('Hover x: $x, y: $y, color: $color');
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ColorPickerScreen(),
-    );
-  }
+/// Called when tap
+void onTap(int x, int y, Color color) async {
+  debugPrint('Tap x: $x, y: $y, color: $color');
 }
 
-class ColorPickerScreen extends StatefulWidget {
-  const ColorPickerScreen({
-    super.key,
-    this.width,
-    this.height,
-    this.imageAsset,
-  });
+/// Refarence for Preview
+final ref = PixelColorRef();
 
-  final double? width;
-  final double? height;
-  final String? imageAsset;
-
-  @override
-  State<ColorPickerScreen> createState() => _ColorPickerScreenState();
-}
-
-class _ColorPickerScreenState extends State<ColorPickerScreen> {
-  // late Image image;
-
-  Image image = Image.asset(
-    "assets/sample_image.jpeg",
-    fit: BoxFit.contain, // BoxFit.contain to ensure the image is always fully visible
+/// main
+void main() async {
+  // Image
+  final pixelColorImage = PixelColor.assetImage(
+    path: 'assets/sample_image.jpeg',
+    onHover: onHover,
+    onTap: onTap,
+    ref: ref,
   );
 
-  Color? color;
-  PickerResponse? userResponse;
+  //
+  // connect preview by "ref"
+  //
 
-  @override
-  Widget build(BuildContext context) {
-    var screenSize = MediaQuery.of(context).size; // Get the screen size
+  // Color Preview
+  final pixelColorPreview = PixelColorPreview(
+    ref: ref,
+  );
 
-    return Container(
-      child: Scaffold(
-          body: Column(
+  // App
+  final app = MaterialApp(
+    home: Scaffold(
+      body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                      color: userResponse?.selectionColor ?? Colors.red,
-                      border: Border.all(color: Colors.black, width: 0),
-                      borderRadius: BorderRadius.circular(0)),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(userResponse?.hexCode ?? "",
-                      style: const TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: AspectRatio(
-              aspectRatio: screenSize.width /
-                  screenSize.height, // Set aspect ratio based on screen size
-              child: ColorPicker(
-                  child: image,
-                  showMarker: false,
-                  onChanged: (response) {
-                    setState(() {
-                      userResponse = response;
-                      color = response.selectionColor;
-                    });
-                  }),
-            ),
-          ),
+          pixelColorPreview, // color preview
+          pixelColorImage, // image
         ],
-      )),
-    );
-  }
+      ),
+    ),
+  );
+
+  // Run App
+  runApp(app);
 }

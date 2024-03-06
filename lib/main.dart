@@ -182,24 +182,45 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
             ),
           ),
         ),
-        Expanded(
-          flex: 5,
-          child: GestureDetector(
-            onTapDown: (details) {
-              final position = details.localPosition;
-              _sampleColors(position);
-            },
-            child: RepaintBoundary(
-              key: _imageKey,
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: Image.network(
-                  widget.imageURL,
-                ),
-              ),
+Expanded(
+  flex: 5,
+  child: GestureDetector(
+    onTapDown: (details) {
+      final position = details.localPosition;
+      _sampleColors(position);
+    },
+    child: RepaintBoundary(
+      key: _imageKey,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return FittedBox(
+            fit: BoxFit.contain,
+            child: Image.network(
+              widget.imageURL,
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Text('Failed to load image'),
+                );
+              },
             ),
-          ),
-        ),
+          );
+        },
+      ),
+    ),
+  ),
+),
+
+        
       ],
     );
   }

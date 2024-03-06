@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -45,22 +46,36 @@ class NewCustomWidget extends StatefulWidget {
 class _NewCustomWidgetState extends State<NewCustomWidget> {
   Color _selectedColor = Colors.transparent;
   List<Color> _sampledColors = [];
+  GlobalKey _imageKey = GlobalKey();
 
   void _sampleColors(Offset position) async {
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
     final Size size = renderBox.size;
-    // Calculate the relative position within the image
+
+    // Capture a screenshot of the rendered image
+    final screenshot = await _captureScreenshot(renderBox);
+
+    // Calculate the relative position within the screenshot
     final dx = position.dx / size.width;
     final dy = position.dy / size.height;
-    // Sample colors from the image
-    final colors = await _sampleImageColors(widget.imageURL, dx, dy);
+
+    // Sample colors from the screenshot
+    final colors = await _sampleImageColors(screenshot, dx, dy);
+
     // Calculate the average color
     final avgColor = _calculateAverageColor(colors);
+
     // Update the selected color and sampled colors
     setState(() {
       _selectedColor = avgColor;
       _sampledColors = colors;
     });
+  }
+
+  Future<ui.Image> _captureScreenshot(RenderBox renderBox) async {
+    final RenderRepaintBoundary boundary = renderBox as RenderRepaintBoundary;
+    final ui.Image image = await boundary.toImage();
+    return image;
   }
 
   Color _calculateAverageColor(List<Color> colors) {
@@ -77,43 +92,38 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
   }
 
   Future<List<Color>> _sampleImageColors(
-      String imageUrl, double dx, double dy) async {
+      ui.Image image, double dx, double dy) async {
     final completer = Completer<List<Color>>();
-    // Load the image using Image.network
-    final imageProvider = Image.network(imageUrl).image;
-    // Resolve the image and get its dimensions
-    final imageStream = imageProvider.resolve(ImageConfiguration());
-    final listener = ImageStreamListener((ImageInfo info, bool _) async {
-      // Convert the image to a ui.Image
-      final uiImage = info.image;
-      // Calculate the pixel coordinates based on the relative position
-      final width = uiImage.width;
-      final height = uiImage.height;
-      final x = (dx * width).floor();
-      final y = (dy * height).floor();
-      // Convert the ui.Image to a ByteData
-      final byteData = await uiImage.toByteData();
-      final bytes = byteData?.buffer.asUint8List() ?? Uint8List(0);
-      // Calculate the pixel index based on the coordinates and image width
-      final pixelIndex = (y * width + x) * 4;
-      // Extract the color values from the pixel bytes
-      final r = bytes[pixelIndex];
-      final g = bytes[pixelIndex + 1];
-      final b = bytes[pixelIndex + 2];
-      // Sample colors from the target pixel and its neighbors
-      final colors = [
-        Color.fromRGBO(r, g, b, 1),
-        _sampleNeighborColor(bytes, x - 1, y, width),
-        _sampleNeighborColor(bytes, x + 1, y, width),
-        _sampleNeighborColor(bytes, x, y - 1, width),
-        _sampleNeighborColor(bytes, x, y + 1, width),
-      ];
-      completer.complete(colors);
-    });
-    imageStream.addListener(listener);
-    final colors = await completer.future;
-    imageStream.removeListener(listener);
-    return colors;
+
+    // Calculate the pixel coordinates based on the relative position
+    final width = image.width;
+    final height = image.height;
+    final x = (dx * width).floor();
+    final y = (dy * height).floor();
+
+    // Convert the ui.Image to a ByteData
+    final byteData = await image.toByteData();
+    final bytes = byteData?.buffer.asUint8List() ?? Uint8List(0);
+
+    // Calculate the pixel index based on the coordinates and image width
+    final pixelIndex = (y * width + x) * 4;
+
+    // Extract the color values from the pixel bytes
+    final r = bytes[pixelIndex];
+    final g = bytes[pixelIndex + 1];
+    final b = bytes[pixelIndex + 2];
+
+    // Sample colors from the target pixel and its neighbors
+    final colors = [
+      Color.fromRGBO(r, g, b, 1),
+      _sampleNeighborColor(bytes, x - 1, y, width),
+      _sampleNeighborColor(bytes, x + 1, y, width),
+      _sampleNeighborColor(bytes, x, y - 1, width),
+      _sampleNeighborColor(bytes, x, y + 1, width),
+    ];
+
+    completer.complete(colors);
+    return completer.future;
   }
 
   Color _sampleNeighborColor(Uint8List bytes, int x, int y, int width) {
@@ -179,10 +189,13 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
               final position = details.localPosition;
               _sampleColors(position);
             },
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: Image.network(
-                widget.imageURL,
+            child: RepaintBoundary(
+              key: _imageKey,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Image.network(
+                  widget.imageURL,
+                ),
               ),
             ),
           ),

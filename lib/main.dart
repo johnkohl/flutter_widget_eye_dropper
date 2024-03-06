@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Custom Widget Demo',
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Custom Widget Demo'),
+          title: Text(''),
         ),
         body: Center(
           child: NewCustomWidget(
@@ -44,6 +44,7 @@ class NewCustomWidget extends StatefulWidget {
 
 class _NewCustomWidgetState extends State<NewCustomWidget> {
   Color _selectedColor = Colors.transparent;
+  List<Color> _sampledColors = [];
 
   void _sampleColors(Offset position) async {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
@@ -55,9 +56,10 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
     final colors = await _sampleImageColors(widget.imageURL, dx, dy);
     // Calculate the average color
     final avgColor = _calculateAverageColor(colors);
-    // Update the selected color
+    // Update the selected color and sampled colors
     setState(() {
       _selectedColor = avgColor;
+      _sampledColors = colors;
     });
   }
 
@@ -125,48 +127,69 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
     return Color.fromRGBO(r, g, b, 1);
   }
 
-@override
-Widget build(BuildContext context) {
-  return Column(
-    children: [
-      Expanded( // This Expanded widget ensures that the color display takes up minimal necessary space
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '#${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-              ),
-              SizedBox(width: 10),
-              Container(
-                width: 20,
-                height: 20,
-                color: _selectedColor,
-              ),
-            ],
-          ),
-        ),
-      ),
-      Expanded( // This Expanded widget allows the image to take up the rest of the available space
-        flex: 5, // Adjust the flex factor if needed to allocate more space to the image
-        child: GestureDetector(
-          onTapDown: (details) {
-            final position = details.localPosition;
-            _sampleColors(position);
-          },
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: Image.network(
-              widget.imageURL,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Selected Color: #${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+                ),
+                SizedBox(height: 10),
+                Container(
+                  width: 20,
+                  height: 20,
+                  color: _selectedColor,
+                ),
+                SizedBox(height: 20),
+                Text('Sampled Colors:'),
+                SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _sampledColors.map((color) {
+                    return Column(
+                      children: [
+                        Text(
+                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+                        ),
+                        SizedBox(height: 5),
+                        Container(
+                          width: 20,
+                          height: 20,
+                          color: color,
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
-
+        Expanded(
+          flex: 5,
+          child: GestureDetector(
+            onTapDown: (details) {
+              final position = details.localPosition;
+              _sampleColors(position);
+            },
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Image.network(
+                widget.imageURL,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   String getHexColor() {
     return '#${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';

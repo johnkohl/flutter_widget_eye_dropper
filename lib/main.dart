@@ -125,12 +125,15 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
     return Color.fromRGBO(r, g, b, 1);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
+@override
+Widget build(BuildContext context) {
+  return Column(
+    children: [
+      Expanded( // This Expanded widget ensures that the color display takes up minimal necessary space
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '#${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
@@ -144,22 +147,26 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
             ],
           ),
         ),
-        GestureDetector(
+      ),
+      Expanded( // This Expanded widget allows the image to take up the rest of the available space
+        flex: 5, // Adjust the flex factor if needed to allocate more space to the image
+        child: GestureDetector(
           onTapDown: (details) {
             final position = details.localPosition;
             _sampleColors(position);
           },
-          child: AspectRatio(
-            aspectRatio: 1,
+          child: FittedBox(
+            fit: BoxFit.contain,
             child: Image.network(
               widget.imageURL,
-              fit: BoxFit.contain,
             ),
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+
 
   String getHexColor() {
     return '#${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';

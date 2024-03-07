@@ -49,7 +49,8 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
   GlobalKey _imageKey = GlobalKey();
 
   void _sampleColors(Offset position) async {
-    final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+    final RenderBox renderBox =
+        _imageKey.currentContext!.findRenderObject() as RenderBox;
     final Size size = renderBox.size;
 
     // Capture a screenshot of the rendered image
@@ -142,85 +143,61 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
     return Column(
       children: [
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+          // child: Padding(
+            // padding: const EdgeInsets.all(0.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Selected Color: #${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-                ),
+                // Text(
+                //   'Selected Color: #${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+                // ),
                 SizedBox(height: 10),
                 Container(
                   width: 20,
                   height: 20,
                   color: _selectedColor,
                 ),
-                SizedBox(height: 20),
-                Text('Sampled Colors:'),
-                SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _sampledColors.map((color) {
-                    return Column(
-                      children: [
-                        Text(
-                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-                        ),
-                        SizedBox(height: 5),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          color: color,
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
               ],
+            ),
+          // ),
+        ),
+        Expanded(
+          flex: 5,
+          child: GestureDetector(
+            onTapDown: (details) {
+              final position = details.localPosition;
+              _sampleColors(position);
+            },
+            child: RepaintBoundary(
+              key: _imageKey,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return FittedBox(
+                    fit: BoxFit.contain,
+                    child: Image.network(
+                      widget.imageURL,
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Text('Failed to load image'),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
-Expanded(
-  flex: 5,
-  child: GestureDetector(
-    onTapDown: (details) {
-      final position = details.localPosition;
-      _sampleColors(position);
-    },
-    child: RepaintBoundary(
-      key: _imageKey,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return FittedBox(
-            fit: BoxFit.contain,
-            child: Image.network(
-              widget.imageURL,
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                }
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Center(
-                  child: Text('Failed to load image'),
-                );
-              },
-            ),
-          );
-        },
-      ),
-    ),
-  ),
-),
-
-        
       ],
     );
   }

@@ -14,9 +14,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Custom Widget Demo',
       home: Scaffold(
-        appBar: AppBar(
-          title: Text(''),
-        ),
         body: Center(
           child: NewCustomWidget(
             imageURL: 'assets/sample_image.jpeg', // Replace with your image URL
@@ -140,27 +137,9 @@ class _NewCustomWidgetState extends State<NewCustomWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return
+    Column(
       children: [
-        Expanded(
-          // child: Padding(
-            // padding: const EdgeInsets.all(0.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Text(
-                //   'Selected Color: #${_selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-                // ),
-                SizedBox(height: 10),
-                Container(
-                  width: 20,
-                  height: 20,
-                  color: _selectedColor,
-                ),
-              ],
-            ),
-          // ),
-        ),
         Expanded(
           flex: 5,
           child: GestureDetector(
